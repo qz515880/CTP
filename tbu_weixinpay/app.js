@@ -135,7 +135,8 @@ function sendPayCallback(option){
 function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response){
     var nonce_str=tools.randomWord(false,30);
     var out_trade_no=orderidtool.createOrderId();
-    var data=getDataStr(nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price);
+    var time_start=new Date().Format("yyyyMMddHHmmss");
+    var data=getDataStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price);
 
     var options = {
         hostname: 'api.mch.weixin.qq.com',
@@ -165,7 +166,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                                 result:0,
                                 wx_nonce_str:newnonce_str,
                                 wx_prepayid:prepay_id,
-                                wx_sign:sign,
+                                wx_sign:getSignStrToClient(timestamp, newnonce_str, prepay_id),
                                 wx_timestamp:timestamp
                             }
                             response.end(JSON.stringify(option));
@@ -194,24 +195,35 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
 
 }
 
+function getSignStrToClient(timestamp, nonce_str,prepayid) {
+  var sign="appid="+'wx884476f603eeb8be'+'&noncestr='+nonce_str+'&package='+'Sign=WXPay'+
+          '&partnerid='+'1318535301'+
+          '&prepayid=' + prepayid +
+          '&timestamp=' + timestamp +
+          '&key='+'12311qwertyuiopzaqxsw09876111542';
+  console.log('client sign='+sign);
+  return tools.md5(sign).toUpperCase();
+}
 
+function getSignStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price, notify_url) {
 
-function getDataStr(nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price){
+  var sign="appid="+'wx884476f603eeb8be'+'&attach='+'tbuwx'+
+          '&body='+product_name+'&mch_id='+'1318535301'+
+          '&nonce_str='+nonce_str+'&notify_url='+notify_url+
+          '&out_trade_no='+out_trade_no+'&product_id='+product_id+
+          '&spbill_create_ip='+ip+'&time_start='+time_start+
+          '&total_fee='+price+'&trade_type='+'APP'+
+          '&key='+'12311qwertyuiopzaqxsw09876111542';
+
+  console.log('sign='+sign);
+  return tools.md5(sign).toUpperCase();
+
+}
+
+function getDataStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price){
     //TODO:根据tbu_id获取各个key值
-
-    var time_start=new Date().Format("yyyyMMddHHmmss");
     var notify_url="http://106.75.135.78:1504/fish/weixin/send/date";
-
-    var sign="appid="+'wx884476f603eeb8be'+'&attach='+'tbuwx'+
-            '&body='+product_name+'&mch_id='+'1318535301'+
-            '&nonce_str='+nonce_str+'&notify_url='+notify_url+
-            '&out_trade_no='+out_trade_no+'&product_id='+product_id+
-            '&spbill_create_ip='+ip+'&time_start='+time_start+
-            '&total_fee='+price+'&trade_type='+'APP'+
-            '&key='+'12311qwertyuiopzaqxsw09876111542';
-
-    console.log('sign='+sign);
-    var signStr=tools.md5(sign).toUpperCase();
+    var signStr=getSignStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price, notify_url);
     console.log('signStr='+signStr);
 
     var data=
