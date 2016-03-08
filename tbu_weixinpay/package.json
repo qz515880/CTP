@@ -1,0 +1,23 @@
+{
+  "name": "testServer",
+  "version": "1.0.0",
+  "description": "Test Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "nanshihui@qq.com",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.13.0",
+    "crypto": "0.0.3",
+    "express": "^4.12.4",
+    "mysql": "^2.7.0",
+    "node-schedule": "0.2.9",
+    "noderice": "^1.0.7",
+    "redis": "0.12.1",
+    "request": "2.67.0",
+    "urlencode": "1.1.0",
+    "xml2js":"0.4.15"
+  }
+}
