@@ -3,12 +3,12 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var query = require("querystring");    //解析POST请求
-var request=require("request"); 
+var request=require("request");
 var schedule = require('node-schedule');
 var urlencode=require('urlencode');
 var noderice=require('noderice');
 noderice.time_init();
-var https = require("https");  
+var https = require("https");
 var xml2js=require('xml2js');
 var orderidtool=require('./script/orderidtool.js');
 var tools=require('./script/tools.js');
@@ -60,7 +60,7 @@ app.get('/weixin/pay/order',function(req,res){
 app.get('/weixin/pay/callback',function(req,res){
     if(req.query.return_code!=null&&req.query.return_code!=undefined&&
         req.query.return_code=="SUCCESS"){
-        
+
         var option={
             result:0,
             order_id:"",
@@ -70,22 +70,22 @@ app.get('/weixin/pay/callback',function(req,res){
         }
 
         redishelper.getValue("WX_ORDER"+wx_order_id, function(err, redis_result) {
-        
+
             if(err) {
                 console.log('获取order_id出错：'+err);
                 res.end('fail');
                 return;
             }
-            if(redis_result == null ) { 
-                console.log('获取order_id == null'); 
-                res.end('fail'); 
+            if(redis_result == null ) {
+                console.log('获取order_id == null');
+                res.end('fail');
                 return ;
             }
             option.order_id=redis_result;
             sendPayCallback(option);
-            res.end("ok"); 
+            res.end("ok");
             return;
-        });        
+        });
     }
     res.end('fail');
 });
@@ -104,7 +104,7 @@ function sendPayCallback(option){
     var options={
         url:'http://114.119.39.150:1701/mr/wx/result?'+sendparam,
         timeout:6000,
-        method:'GET' 
+        method:'GET'
     };
 
     request(options, function (error, response, body) {
@@ -112,7 +112,7 @@ function sendPayCallback(option){
             console.log('error='+error);
             return ;
         }
-        
+
         console.log('response.statusCode='+response.statusCode);
         console.log('response.body='+response.body);
 
@@ -144,13 +144,13 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
         method: 'POST'
     };
 
-    var reqVideo = https.request(options, function (res) {  
-        var body = "";  
-        res.on('data', function (data) { body += data; })  
-        .on('end', function () {
+    var reqVideo = https.request(options, function (res) {
+        var body = "";
+        res.on('data', function (data) { body += data; })
+          .on('end', function () {
                 var parseString = require('xml2js').parseString;
-                parseString(body, function (err, result) { 
-                    console.log('req result='+JSON.stringify(result));                    
+                parseString(body, function (err, result) {
+                    console.log('req result='+JSON.stringify(result));
                     if(result.xml.return_code=="FAIL"){
                         var option={
                             result:102
@@ -160,10 +160,10 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                             var prepay_id=result.xml.prepay_id+"";
                             var sign=result.xml.sign+"";
                             var timestamp = Date.parse(new Date());
-                            
+                            var newnonce_str =result.xml.nonce_str+"";
                             var option={
                                 result:0,
-                                wx_nonce_str:nonce_str,
+                                wx_nonce_str:newnonce_str,
                                 wx_prepayid:prepay_id,
                                 wx_sign:sign,
                                 wx_timestamp:timestamp
@@ -171,7 +171,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                             response.end(JSON.stringify(option));
                             //保存到redis里面
                             redishelper.setVaule("WX_ORDER"+out_trade_no,order_id);
-                        
+
                     }else{
                         var option={
                             result:103
@@ -179,23 +179,25 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                         response.end(JSON.stringify(option));
                     }
                 });
-            
-      });   
-    }).on("error", function (err) {  
-        console.log(err.stack); 
+
+      });
+    }).on("error", function (err) {
+        console.log(err.stack);
         var option={
             result:104
         }
         response.end(JSON.stringify(option));
     });
     reqVideo.write(data + '\n');
-    reqVideo.end();  
+    reqVideo.end();
+
+
 }
 
 
 
 function getDataStr(nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price){
-    //TODO:根据tbu_id获取各个key值       
+    //TODO:根据tbu_id获取各个key值
 
     var time_start=new Date().Format("yyyyMMddHHmmss");
     var notify_url="http://106.75.135.78:1504/fish/weixin/send/date";
@@ -211,7 +213,7 @@ function getDataStr(nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,pri
     console.log('sign='+sign);
     var signStr=tools.md5(sign).toUpperCase();
     console.log('signStr='+signStr);
-    
+
     var data=
     '<xml>'+
     '<appid>wx884476f603eeb8be</appid>'+
@@ -229,7 +231,7 @@ function getDataStr(nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,pri
     '<sign>'+signStr+'</sign>'+
     '</xml>';
 
-    return data;  
+    return data;
 }
 
 
@@ -241,9 +243,7 @@ app.use(function (req, res) {
 
 app.listen(app.get('port'), function() {
     var nowDate = new Date();
-    console.log(nowDate.toLocaleDateString() + ' ' + 
+    console.log(nowDate.toLocaleDateString() + ' ' +
         nowDate.toLocaleTimeString() );
     console.log('express started on port :' + app.get('port'));
 });
-
-

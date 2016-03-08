@@ -1,12 +1,12 @@
 {
-  "name": "testServer",
+  "name": "CTP",
   "version": "1.0.0",
-  "description": "Test Server",
-  "main": "index.js",
+  "description": "China Third Pay",
+  "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "nanshihui@qq.com",
+  "author": "molo.xiao@gmail.com",
   "license": "ISC",
   "dependencies": {
     "body-parser": "^1.13.0",
