@@ -34,7 +34,8 @@ app.get('/', function(req, res) {
 //参数 order_id, tbu_id,product_id,product_name,price
 
 app.get('/weixin/pay/order',function(req,res){
-    console.log('enter req.query.order_id='+req.query.order_id);
+    //console.log('enter req.query.order_id='+req.query.order_id);
+    //console.log('enter req.query.product_name='+req.query.product_name);
     if(req.query.order_id!=null&&req.query.order_id!=undefined&&
         req.query.tbu_id!=null&&req.query.tbu_id!=undefined&&
         req.query.product_id!=null&&req.query.product_id!=undefined&&
@@ -44,7 +45,7 @@ app.get('/weixin/pay/order',function(req,res){
         order_id=req.query.order_id;
         var ip=noderice.getip(req);
         doPayRequest(req.query.order_id,req.query.tbu_id,req.query.product_id,
-            'testpay',req.query.price,ip,res);
+            req.query.product_name,req.query.price,ip,res);
         return;
     }
 
@@ -58,6 +59,7 @@ app.get('/weixin/pay/order',function(req,res){
 
 //http://106.75.135.78:1801/weixin/pay/callback
 app.get('/weixin/pay/callback',function(req,res){
+    //console.log('req.query.return_code='+req.query.return_code);
     if(req.query.return_code!=null&&req.query.return_code!=undefined&&
         req.query.return_code=="SUCCESS"){
 
@@ -69,25 +71,30 @@ app.get('/weixin/pay/callback',function(req,res){
             time_end:req.query.time_end
         }
 
-        redishelper.getValue("WX_ORDER"+wx_order_id, function(err, redis_result) {
+        redishelper.getVaule(config.redisHEAD+option.wx_order_id, function(err, redis_result) {
 
             if(err) {
-                console.log('获取order_id出错：'+err);
+               // console.log('获取order_id出错：'+err);
                 res.end('fail');
+                //TODO:数据库中查询
                 return;
             }
             if(redis_result == null ) {
-                console.log('获取order_id == null');
+                //console.log('获取order_id == null');
                 res.end('fail');
+                //TODO:数据库中查询
                 return ;
             }
             option.order_id=redis_result;
+            //TODO:更新数据库信息
             sendPayCallback(option);
             res.end("ok");
             return;
         });
+    }else{
+        res.end('fail');
     }
-    res.end('fail');
+    
 });
 
 
@@ -102,7 +109,7 @@ function sendPayCallback(option){
     ;
 
     var options={
-        url:'http://114.119.39.150:1701/mr/wx/result?'+sendparam,
+        url:config.PayCallbackurl+sendparam,
         timeout:6000,
         method:'GET'
     };
@@ -113,8 +120,8 @@ function sendPayCallback(option){
             return ;
         }
 
-        console.log('response.statusCode='+response.statusCode);
-        console.log('response.body='+response.body);
+        //console.log('response.statusCode='+response.statusCode);
+        //console.log('response.body='+response.body);
 
         if(response.statusCode!='200'||body!='ok'){
 
@@ -151,7 +158,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
           .on('end', function () {
                 var parseString = require('xml2js').parseString;
                 parseString(body, function (err, result) {
-                    console.log('req result='+JSON.stringify(result));
+                    //console.log('req result='+JSON.stringify(result));
                     if(result.xml.return_code=="FAIL"){
                         var option={
                             result:102
@@ -171,7 +178,10 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                             }
                             response.end(JSON.stringify(option));
                             //保存到redis里面
-                            redishelper.setVaule("WX_ORDER"+out_trade_no,order_id);
+                            //redishelper.setVaule("WX_ORDER"+out_trade_no,order_id);
+                            //设置实效时间，2个小时多10分钟［微信订单的实效时间是2个小时］
+                           redishelper.setValueWithExpire(config.redisHEAD+out_trade_no,order_id,60*6*21);
+                           //TODO:入数据库
 
                     }else{
                         var option={
@@ -183,7 +193,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
 
       });
     }).on("error", function (err) {
-        console.log(err.stack);
+        //console.log(err.stack);
         var option={
             result:104
         }
@@ -196,47 +206,46 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
 }
 
 function getSignStrToClient(timestamp, nonce_str,prepayid) {
-  var sign="appid="+'wx884476f603eeb8be'+'&noncestr='+nonce_str+'&package='+'Sign=WXPay'+
-          '&partnerid='+'1318535301'+
+  var sign="appid="+config.appid+'&noncestr='+nonce_str+'&package='+'Sign=WXPay'+
+          '&partnerid='+config.mch_id+
           '&prepayid=' + prepayid +
           '&timestamp=' + timestamp +
-          '&key='+'12311qwertyuiopzaqxsw09876111542';
-  console.log('client sign='+sign);
+          '&key='+config.appkey;
+  //console.log('client sign='+sign);
   return tools.md5(sign).toUpperCase();
 }
 
 function getSignStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price, notify_url) {
 
-  var sign="appid="+'wx884476f603eeb8be'+'&attach='+'tbuwx'+
-          '&body='+product_name+'&mch_id='+'1318535301'+
+  var sign="appid="+config.appid+'&attach='+config.attach+
+          '&body='+product_name+'&mch_id='+config.mch_id+
           '&nonce_str='+nonce_str+'&notify_url='+notify_url+
           '&out_trade_no='+out_trade_no+'&product_id='+product_id+
           '&spbill_create_ip='+ip+'&time_start='+time_start+
           '&total_fee='+price+'&trade_type='+'APP'+
-          '&key='+'12311qwertyuiopzaqxsw09876111542';
+          '&key='+config.appkey;
 
-  console.log('sign='+sign);
+  //console.log('sign='+sign);
   return tools.md5(sign).toUpperCase();
 
 }
 
 function getDataStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price){
     //TODO:根据tbu_id获取各个key值
-    var notify_url="http://106.75.135.78:1504/fish/weixin/send/date";
-    var signStr=getSignStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price, notify_url);
-    console.log('signStr='+signStr);
+    var signStr=getSignStr(time_start, nonce_str,out_trade_no,tbu_id,product_name,product_id,ip,price, config.notify_url);
+    //console.log('signStr='+signStr);
 
     var data=
     '<xml>'+
-    '<appid>wx884476f603eeb8be</appid>'+
-    '<mch_id>1318535301</mch_id>'+
+    '<appid>'+config.appid+'</appid>'+
+    '<mch_id>'+config.mch_id+'</mch_id>'+
     '<nonce_str>'+nonce_str+'</nonce_str>'+
     '<body>'+product_name+'</body>'+
-    '<attach>tbuwx</attach>'+
+    '<attach>'+config.attach+'</attach>'+
     '<out_trade_no>'+out_trade_no+'</out_trade_no>'+
     '<total_fee>'+price+'</total_fee>'+
     '<spbill_create_ip>'+ip+'</spbill_create_ip>'+
-    '<notify_url>'+notify_url+'</notify_url>'+
+    '<notify_url>'+config.notify_url+'</notify_url>'+
     '<trade_type>APP</trade_type>'+
     '<product_id>'+product_id+'</product_id>'+
     '<time_start>'+time_start+'</time_start>'+
