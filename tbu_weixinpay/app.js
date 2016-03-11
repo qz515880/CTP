@@ -2,7 +2,7 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
-var query = require("querystring");    //解析POST请求
+var query = require("querystring");
 var request=require("request");
 var schedule = require('node-schedule');
 var urlencode=require('urlencode');
@@ -30,9 +30,7 @@ app.get('/', function(req, res) {
 });
 
 
-//http://106.75.135.78:1801/weixin/pay/order
 //参数 order_id, tbu_id,product_id,product_name,price
-
 app.get('/weixin/pay/order',function(req,res){
     //console.log('enter req.query.order_id='+req.query.order_id);
     //console.log('enter req.query.product_name='+req.query.product_name);
@@ -56,13 +54,162 @@ app.get('/weixin/pay/order',function(req,res){
     res.end(JSON.stringify(option));
 });
 
+//http://106.75.135.78:1801/weixin/pay/close?order_id=20160308122333&wx_order_id=201603101025551265
+//http://106.75.135.78:1801/weixin/pay/close
+//参数：wx_order_id：微信订单号 ；order_id:客户端订单号
+app.get('/weixin/pay/close',function(req,res){
+    //doPayClose(req.query.wx_order_id,res);
+    //return;
 
-//http://106.75.135.78:1801/weixin/pay/callback
+    if(req.query.order_id!=null&&req.query.order_id!=undefined&&
+        req.query.wx_order_id!=null&&req.query.wx_order_id!=undefined){
+        //返回接收信息
+        console.log('ip='+noderice.getip(req));
+        //console.log('paytype='+req.query.paytype);
+        if(noderice.getip(req)==''){
+            //校验ip
+           // return;
+        }
+
+        redishelper.getVaule(config.redisHEAD+req.query.wx_order_id, function(err, redis_result) {
+
+                if(err||redis_result==null||redis_result=='') {
+                    var option={
+                        result:102,
+                        msg:"查询订单出错"
+                    }
+                    console.log(JSON.stringify(option));
+                    res.end(JSON.stringify(option));
+                     return;
+                }
+
+                if(redis_result==req.query.order_id){
+                    doPayClose(req.query.wx_order_id,res);
+                    return;
+                }
+
+                var option={
+                    result:103,
+                    msg:"订单不匹配"
+                }
+                console.log(JSON.stringify(option));
+                res.end(JSON.stringify(option));
+                
+        });
+    }else{
+        var option={
+            result:101,
+            msg:"参数校验失败"
+        }
+        console.log(JSON.stringify(option));
+        res.end(JSON.stringify(option));
+    }
+});
+
+
+
+function doPayClose(out_trade_no,response){
+    var nonce_str=tools.randomWord(false,30);
+    var data=getCloseDataStr(nonce_str,out_trade_no);
+    var options = {
+        hostname: 'api.mch.weixin.qq.com',
+        path: '/pay/closeorder',
+        port: 443,
+        method: 'POST'
+    };
+
+    var reqVideo = https.request(options, function (res) {
+        var body = "";
+        res.on('data', function (data) { body += data; })
+          .on('end', function () {
+                var parseString = require('xml2js').parseString;
+                parseString(body, function (err, result) {
+                    console.log('req result='+JSON.stringify(result));
+                    if(result.xml.return_code=="FAIL"){
+                        var msgStr=result.xml.return_msg;
+                        var option={
+                            result:102, //0:表示成功 ；其他失败
+                            msg:msgStr  //失败的时候，返回微信给的描述信息
+                        }
+                        response.end(JSON.stringify(option));
+                    }else{
+                        //{"xml":{"return_code":["SUCCESS"],
+                        //"return_msg":["OK"],
+                        //"appid":["wx884476f603eeb8be"],
+                        //"mch_id":["1318535301"],
+                        //"sub_mch_id":[""],
+                        //"nonce_str":["bnDQ5QawJD1k1RDl"],
+                        //"sign":["A1F70F2142A2EF386D13501DCB0148D6"],"result_code":["FAIL"],"err_code":["USERPAYING"],"err_code_des":["支付锁定中，扣款和撤销建议间隔10秒以上"]}}
+                            
+                            var err_code=result.xml.err_code;
+                            var err_code_des=result.xml.err_code_des;
+                            //var appid=result.xml.appid;
+                            //var mch_id=result.xml.mch_id;
+                            //var nonce_str=result.xml.nonce_str;
+                            //var sign=result.xml.sign;
+                            var result_code=result.xml.result_code;
+                            if(result_code!=null&&result_code=="FAIL"){
+                                var option={
+                                    result:105,
+                                    msg:err_code_des
+                                }
+                                response.end(JSON.stringify(option));
+                            }else{
+                                var option={
+                                    result:0,
+                                    msg:"取消订单成功"
+                                }
+                                response.end(JSON.stringify(option));
+                            }
+                            
+                            //TODO:入数据库
+                    }
+                });
+
+      });
+    }).on("error", function (err) {
+        //console.log(err.stack);
+        var option={
+            result:104,
+            msg:"请求失败"
+        }
+        response.end(JSON.stringify(option));
+    });
+    reqVideo.write(data + '\n');
+    reqVideo.end();
+
+
+}
+
+function getCloseDataStr(nonce_str,out_trade_no){
+    var signStr=getCloseSignStr(nonce_str,out_trade_no);
+    console.log('signStr='+signStr);
+    var data=
+    '<xml>'+
+    '<appid>'+config.appid+'</appid>'+
+    '<mch_id>'+config.mch_id+'</mch_id>'+
+    '<nonce_str>'+nonce_str+'</nonce_str>'+
+    '<out_trade_no>'+out_trade_no+'</out_trade_no>'+
+    '<sign>'+signStr+'</sign>'+
+    '</xml>';
+    return data;  
+}
+
+function getCloseSignStr(nonce_str,out_trade_no){
+    var sign="appid="+config.appid+
+          '&mch_id='+config.mch_id+
+          '&nonce_str='+nonce_str+
+          '&out_trade_no='+out_trade_no+
+          '&key='+config.appkey;
+    console.log('sign='+sign);
+    return tools.md5(sign).toUpperCase();
+}
+
+
+
 app.get('/weixin/pay/callback',function(req,res){
-    //console.log('req.query.return_code='+req.query.return_code);
     if(req.query.return_code!=null&&req.query.return_code!=undefined&&
         req.query.return_code=="SUCCESS"){
-
         var option={
             result:0,
             order_id:"",
@@ -133,9 +280,6 @@ function sendPayCallback(option){
 }
 
 /////////////////////
-//AppID wx884476f603eeb8be
-//AppSecret d03797961aec989b75f74a9d83c719f5
-//app key:12311qwertyuiopzaqxsw09876111542
 //统一下单：
 //URL地址：https://api.mch.weixin.qq.com/pay/unifiedorder
 
@@ -174,7 +318,8 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                                 wx_nonce_str:newnonce_str,
                                 wx_prepayid:prepay_id,
                                 wx_sign:getSignStrToClient(timestamp, newnonce_str, prepay_id),
-                                wx_timestamp:timestamp
+                                wx_timestamp:timestamp,
+                                wx_order_id:out_trade_no
                             }
                             response.end(JSON.stringify(option));
                             //保存到redis里面
