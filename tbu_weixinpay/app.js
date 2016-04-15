@@ -108,6 +108,7 @@ app.get('/weixin/pay/closeorder',function(req,res){
     }
 });
 
+//TODO:这里走取读配置的方式
 function doPayCloseOrder(out_trade_no,tbu_id,response){
     var nonce_str=tools.randomWord(false,30);
     var config_option;
