@@ -351,6 +351,9 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
     var config_option;
     if(parseInt(tbu_id)==201602){
         config_option=config.key_201602;
+    }else if(parseInt(tbu_id)==201609){
+        config_option=config.key_201609;
+        console.log('config_option.appid='+config_option.appid);
     }else if(parseInt(tbu_id)==201503){
         config_option=config.key_201503;
         console.log('config_option.appid='+config_option.appid);
@@ -360,7 +363,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
     }else if(parseInt(tbu_id)==201534){
         config_option=config.key_201534;
         console.log('config_option.appid='+config_option.appid);
-    }else{
+    } else{
         var option={
             result:106
         }

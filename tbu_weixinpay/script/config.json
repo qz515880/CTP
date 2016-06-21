@@ -1,0 +1,63 @@
+{
+	"app": 1801,
+	"redis" : {
+		"username" : "root",
+		"password" :  "Tbu2020Foo",
+		"redis_host" : "10.13.20.103",
+		"redis_port" : 6379,
+		"redis_db_name" : "TbuMem",
+		"no_ready_check" : true
+	},
+	"mysql_weixin" : {
+		"host" : "10.13.30.185",
+		"port" : 3306, 
+		"user" : "root",
+		"password" : "Tbu2020Foo",
+		"database" : "tbu_weixin_pay"
+		},
+	"mysql_weixin_s" : {
+		"host" : "10.13.60.58",
+		"port" : 3306, 
+		"user" : "root",
+		"password" : "Tbu2020Foo",
+		"database" : "tbu_weixin_pay"
+		},
+	"PayCallbackurl":"http://106.75.135.78:1701/mr/wx/result?",
+	"redisHEAD":"WX_ORDER",
+	"key_201602" : {
+		"attach":"tbuwx",
+		"appid":"wx884476f603eeb8be",
+		"mch_id":"1318535301",
+		"appkey":"12311qwertyuiopzaqxsw09876111542",
+		"notify_url":"http://106.75.135.78:1504/fish/weixin/send/date"
+	},
+	"key_201609" : {
+		"attach":"tbuwx",
+		"appid":"wx41243093af4a650e",
+		"mch_id":"1317208901",
+		"appkey":"1234567890poiuytrewqasdfghjkmngf",
+		"notify_url":"http://106.75.135.78:1504/weixin/fish_kx/send/date"
+	},
+	"key_201503" : {
+		"attach":"tbuwx",
+		"appid":"wx41243093af4a650e",
+		"mch_id":"1317208901",
+		"appkey":"1234567890poiuytrewqasdfghjkmngf",
+		"notify_url":"http://106.75.135.78:1504/weixin/fish_kx/send/date"
+	},
+	"key_201509" : {
+		"attach":"tbuwx",
+		"appid":"wx08cab0f080ff826e",
+		"mch_id":"1317204501",
+		"appkey":"jgfyuernjjjriajlekokof9878thuhfe",
+		"notify_url":"http://106.75.135.78:1504/weixin/kx_ddz/send/date"
+	},
+	"key_201534" : {
+		"attach":"tbuwx",
+		"appid":"wx3b676c1ce2a3fc03",
+		"mch_id":"1316815401",
+		"appkey":"jiuiu890fkriut94r0ro033kfkfkkfkf",
+		"notify_url":"http://106.75.135.78:1504/weixin/cj_ddz/send/date"
+	}
+	
+}
