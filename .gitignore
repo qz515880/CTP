@@ -88,5 +88,3 @@ Device-Debug/
 Device-Release/
 /proj.android/local.properties
 /proj.android/libs/armeabi/libcocos2dcpp.so
-
-tbu_weixinpay/script/config.json
