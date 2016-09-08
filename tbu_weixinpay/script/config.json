@@ -58,6 +58,14 @@
 		"mch_id":"1316815401",
 		"appkey":"jiuiu890fkriut94r0ro033kfkfkkfkf",
 		"notify_url":"http://106.75.135.78:1504/weixin/cj_ddz/send/date"
+	},
+	"key_201617" : {
+		"attach":"tbuwx",
+		"appid":"wx650e2a97e8b7b265",
+		"mch_id":"1380518102",
+		"appkey":"pp4567890poiuytrewqasdfghjkmngfp",
+		"notify_url":"http://183.129.206.54:1111/pay!ordCallback.action"
 	}
+
 	
 }

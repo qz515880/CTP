@@ -119,6 +119,8 @@ function doPayCloseOrder(out_trade_no,tbu_id,response){
        config_option = config.key_201509;
     }else if(parseInt(tbu_id)==201534){
        config_option = config.key_201534;
+    }else if(parseInt(tbu_id)==201617){
+       config_option = config.key_201617;
     }
     var data=getCloseDataStr(nonce_str,out_trade_no,config_option);
     var options = {
@@ -363,7 +365,11 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
     }else if(parseInt(tbu_id)==201534){
         config_option=config.key_201534;
         console.log('config_option.appid='+config_option.appid);
-    } else{
+    }else if(parseInt(tbu_id)==201617){
+        config_option=config.key_201617;
+        console.log('config_option.appid='+config_option.appid);
+    } 
+    else{
         var option={
             result:106
         }
