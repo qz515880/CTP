@@ -56,7 +56,7 @@ function updatePayCallBackInfo(client,option){
 function getPayResultByOrderId(client,wx_order_id,callback){
     var url='select * from order_info where wx_order_id=?';
     client.query(url,
-         [option.wx_order_id],
+         wx_order_id,
          function (err, results) {
             if (err) {
                 console.log('insertOrderInfo meet'+err);

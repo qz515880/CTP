@@ -27,7 +27,7 @@ function setVaule(key, values) {
 	
 }
 
-function getVaule(key, callback ) {
+function getVaule(key, callback) {
 	client.get(key, function(err, redis_result) {
 		callback(err, redis_result);
 	});

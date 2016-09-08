@@ -201,7 +201,7 @@ function getCloseSignStr(nonce_str,out_trade_no,option){
     return tools.md5(sign).toUpperCase();
 }
 
-
+//订单查询
 app.get('/weixin/pay/query',function(req,res){
     if(req.query.order_id!=null&&req.query.order_id!=undefined&&
         req.query.wx_order_id!=null&&req.query.wx_order_id!=undefined){
@@ -449,7 +449,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                             }
                             response.end(JSON.stringify(option));
                             //保存到redis里面
-                            //redishelper.setVaule("WX_ORDER"+out_trade_no,order_id);
+                           redishelper.setVaule(config.redisHEAD+out_trade_no,order_id);
                             //设置实效时间，2个小时多10分钟［微信订单的实效时间是2个小时］
                            redishelper.setValueWithExpire(config.redisHEAD+out_trade_no,order_id,60*6*21);
                            //TODO:入数据库
