@@ -278,6 +278,7 @@ function queryPayResult(wx_order_id,res){
 
 
 app.get('/weixin/pay/callback',function(req,res){
+    console.log("query callback 1......................");
     if(req.query.return_code!=null&&req.query.return_code!=undefined&&
         req.query.return_code=="SUCCESS"){
         var option={
@@ -287,22 +288,25 @@ app.get('/weixin/pay/callback',function(req,res){
             price:req.query.total_fee,
             time_end:req.query.time_end
         }
-
+        console.log("query callback 2......................");
         redishelper.getVaule(config.redisHEAD+option.wx_order_id, function(err, redis_result) {
             if(err) {
-               // console.log('获取order_id出错：'+err);
+                console.log('获取order_id出错：'+err);
                 res.end('fail');
                 //TODO:数据库中查询
                 return;
             }
             if(redis_result == null ) {
-                //console.log('获取order_id == null');
+                console.log('获取order_id == null');
                 res.end('fail');
                 //TODO:数据库中查询
                 return ;
             }
             option.order_id=redis_result;
             //更新数据库信息
+            console.log("query callback = "+option.order_id);
+            console.log("query callback = "+option.wx_order_id);
+            console.log("query callback = "+option.time_end);
             dbmanager_weixin.updatePayCallBackInfo(dbmanager.getClient(),option);
             //TODO:推送消息回去
             sendPayCallback(option);
@@ -447,7 +451,7 @@ function doPayRequest(order_id,tbu_id,product_id,product_name,price,ip,response)
                                 wx_timestamp:timestamp,
                                 wx_order_id:out_trade_no
                             }
-                            response.end(JSON.stringify(option));
+                           response.end(JSON.stringify(option));
                             //保存到redis里面
                            redishelper.setVaule(config.redisHEAD+out_trade_no,order_id);
                             //设置实效时间，2个小时多10分钟［微信订单的实效时间是2个小时］
